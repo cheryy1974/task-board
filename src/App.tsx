@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import "./App.css";
 
 type Task = {
@@ -7,9 +7,34 @@ type Task = {
   done: boolean;
 };
 
+const STORAGE_KEY = "task-board:tasks";
+
+const loadTasks = (): Task[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is Task =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof item.id === "number" &&
+        typeof item.text === "string" &&
+        typeof item.done === "boolean",
+    );
+  } catch {
+    return [];
+  }
+};
+
 export default function App() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(loadTasks);
   const [input, setInput] = useState("");
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }, [tasks]);
 
   const addTask = (e: FormEvent) => {
     e.preventDefault();
